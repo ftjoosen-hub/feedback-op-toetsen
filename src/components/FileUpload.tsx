@@ -1,57 +1,91 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 
 interface FileUploadProps {
-  onFileUpload?: (file: File) => void
+  onFileUpload: (file: File, content: string, fileType: string) => void
+  isAnalyzing: boolean
 }
 
-export default function FileUpload({ onFileUpload }: FileUploadProps) {
+export default function FileUpload({ onFileUpload, isAnalyzing }: FileUploadProps) {
   const [isDragging, setIsDragging] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
-  const [isProcessing, setIsProcessing] = useState(false)
-  const [result, setResult] = useState<any>(null)
+  const [uploadError, setUploadError] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (file: File) => {
-    const isDocx = file.name.endsWith('.docx')
-    const isPdf = file.name.endsWith('.pdf')
+    setUploadError('')
     
-    if (!isDocx && !isPdf) {
-      alert('Alleen .docx en .pdf bestanden zijn toegestaan!')
+    // Check file type
+    const fileName = file.name.toLowerCase()
+    const isImage = fileName.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/i)
+    const isPdf = fileName.endsWith('.pdf')
+    const isDocx = fileName.endsWith('.docx')
+    const isText = fileName.match(/\.(txt|md)$/i)
+    
+    if (!isImage && !isPdf && !isDocx && !isText) {
+      setUploadError('Ondersteunde formaten: afbeeldingen (JPG, PNG), PDF, Word documenten (.docx), of tekstbestanden (.txt)')
       return
     }
 
-    setUploadedFile(file)
-    setIsProcessing(true)
-    setResult(null)
-    
+    // Check file size (max 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Bestand is te groot. Maximum grootte is 10MB.')
+      return
+    }
+
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      
-      const response = await fetch('/api/upload-docx', {
-        method: 'POST',
-        body: formData,
-      })
-      
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Upload failed')
+      let content = ''
+      let fileType = ''
+
+      if (isImage) {
+        // Handle images - convert to base64
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const result = e.target?.result as string
+          onFileUpload(file, result, 'image')
+        }
+        reader.onerror = () => {
+          setUploadError('Fout bij het lezen van de afbeelding')
+        }
+        reader.readAsDataURL(file)
+        return
       }
-      
-      const data = await response.json()
-      setResult(data)
-      
-      if (onFileUpload) {
-        onFileUpload(file)
+
+      if (isText) {
+        // Handle text files
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          const result = e.target?.result as string
+          onFileUpload(file, result, 'text')
+        }
+        reader.onerror = () => {
+          setUploadError('Fout bij het lezen van het tekstbestand')
+        }
+        reader.readAsText(file, 'UTF-8')
+        return
+      }
+
+      if (isPdf || isDocx) {
+        // Handle PDF and DOCX via server
+        const formData = new FormData()
+        formData.append('file', file)
+
+        const response = await fetch('/api/upload-document', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Upload failed')
+        }
+
+        const data = await response.json()
+        onFileUpload(file, data.content, 'document')
       }
     } catch (error) {
-      console.error('Upload error:', error)
-      setResult({
-        error: error instanceof Error ? error.message : 'Er is een fout opgetreden bij het uploaden van het bestand.'
-      })
-    } finally {
-      setIsProcessing(false)
+      console.error('File upload error:', error)
+      setUploadError('Fout bij uploaden: ' + (error instanceof Error ? error.message : 'Onbekende fout'))
     }
   }
 
@@ -82,38 +116,61 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
     }
   }
 
+  if (isAnalyzing) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-8">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
+            <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            Toets wordt geanalyseerd...
+          </h3>
+          <p className="text-gray-600 mb-4">
+            Ik bekijk je antwoorden en bereid persoonlijke feedback voor
+          </p>
+          <div className="flex justify-center space-x-2">
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+            <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="space-y-4">
-      {/* Upload Area */}
+    <div className="bg-white rounded-xl shadow-lg p-8">
       <div
-        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+        className={`border-2 border-dashed rounded-xl p-12 text-center transition-all duration-300 ${
           isDragging
-            ? 'border-purple-500 bg-purple-50'
-            : 'border-gray-300 hover:border-purple-400'
+            ? 'border-blue-500 bg-blue-50'
+            : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
         }`}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
       >
         <div className="flex flex-col items-center space-y-4">
-          <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
             </svg>
           </div>
           
           <div>
-            <p className="text-lg font-medium text-gray-700">
-              Sleep je document hier naartoe
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              Sleep je toets hierheen
+            </h3>
+            <p className="text-gray-600 mb-4">
               of klik om een bestand te selecteren
             </p>
           </div>
           
           <input
+            ref={fileInputRef}
             type="file"
-            accept=".docx,.pdf"
+            accept=".pdf,.docx,.txt,.md,.jpg,.jpeg,.png,.gif,.webp,.bmp"
             onChange={handleFileInput}
             className="hidden"
             id="file-input"
@@ -121,93 +178,58 @@ export default function FileUpload({ onFileUpload }: FileUploadProps) {
           
           <label
             htmlFor="file-input"
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors cursor-pointer"
+            className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors cursor-pointer font-medium"
           >
             Bestand Selecteren
           </label>
           
-          <p className="text-xs text-gray-400">
-            Ondersteunde formaten: .docx, .pdf (max 10MB)
-          </p>
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-2">
+              Ondersteunde formaten:
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
+              <span className="bg-gray-100 px-2 py-1 rounded">📄 PDF</span>
+              <span className="bg-gray-100 px-2 py-1 rounded">📝 Word (.docx)</span>
+              <span className="bg-gray-100 px-2 py-1 rounded">📸 Afbeeldingen</span>
+              <span className="bg-gray-100 px-2 py-1 rounded">📋 Tekst (.txt)</span>
+            </div>
+            <p className="text-xs text-gray-400 mt-2">
+              Maximum bestandsgrootte: 10MB
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Processing State */}
-      {isProcessing && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
-            <span className="text-blue-700">Bestand wordt verwerkt...</span>
-          </div>
-        </div>
-      )}
-
-      {/* Uploaded File Info */}
-      {uploadedFile && !isProcessing && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-              {uploadedFile.name.endsWith('.pdf') ? (
-                <svg className="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                </svg>
-              ) : (
-                <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                </svg>
-              )}
+      {uploadError && (
+        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <span className="text-red-500 text-xl">⚠️</span>
             </div>
-            <div>
-              <p className="font-medium text-green-800">{uploadedFile.name}</p>
-              <p className="text-sm text-green-600">
-                {(uploadedFile.size / 1024 / 1024).toFixed(2)} MB
-                {result?.fileType && ` • ${result.fileType}`}
-              </p>
+            <div className="ml-3">
+              <p className="text-red-800 font-medium">Upload fout</p>
+              <p className="text-red-700 text-sm mt-1">{uploadError}</p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Error State */}
-      {result?.error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
-              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-medium text-red-800">Fout bij verwerken</p>
-              <p className="text-sm text-red-600">{result.error}</p>
-            </div>
+      <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <div className="flex-shrink-0">
+            <span className="text-blue-600 text-xl">💡</span>
+          </div>
+          <div className="ml-3">
+            <h4 className="text-blue-900 font-medium">Tips voor de beste feedback:</h4>
+            <ul className="text-blue-800 text-sm mt-2 space-y-1">
+              <li>• Zorg dat je antwoorden duidelijk leesbaar zijn</li>
+              <li>• Upload de volledige toets voor complete feedback</li>
+              <li>• Maak foto's met goede belichting (bij afbeeldingen)</li>
+              <li>• Gebruik duidelijke vraagnummering</li>
+            </ul>
           </div>
         </div>
-      )}
-
-      {/* Success Result */}
-      {result?.content && !result?.error && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-          <div className="flex justify-between items-start mb-3">
-            <h4 className="font-medium text-gray-800">Bestand Inhoud:</h4>
-            <div className="text-xs text-gray-500 space-x-4">
-              {result.wordCount && <span>{result.wordCount} woorden</span>}
-              {result.characterCount && <span>{result.characterCount} karakters</span>}
-            </div>
-          </div>
-          <div className="text-sm text-gray-600 whitespace-pre-wrap max-h-40 overflow-y-auto bg-white p-3 rounded border">
-            {result.content.length > 500 
-              ? `${result.content.substring(0, 500)}...` 
-              : result.content
-            }
-          </div>
-          {result.content.length > 500 && (
-            <p className="text-xs text-gray-500 mt-2">
-              Eerste 500 karakters getoond. Volledige inhoud beschikbaar via API.
-            </p>
-          )}
-        </div>
-      )}
+      </div>
     </div>
   )
-} 
+}
