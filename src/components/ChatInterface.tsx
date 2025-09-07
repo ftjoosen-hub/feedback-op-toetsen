@@ -12,6 +12,9 @@ interface FeedbackData {
   isComplete: boolean
   finalGrade?: number
   questionProgress: { [key: number]: 'pending' | 'reviewing' | 'completed' }
+  currentRemediatingQuestion?: string
+  currentOriginalQuestion?: string
+  currentStudentAnswer?: string
 }
 
 interface ExamData {
@@ -40,6 +43,11 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
   const [isLoading, setIsLoading] = useState(false)
   const [streamedContent, setStreamedContent] = useState('')
   const [isStreaming, setIsStreaming] = useState(false)
+  const [conversationHistory, setConversationHistory] = useState<Array<{
+    type: 'student' | 'teacher'
+    content: string
+    timestamp: Date
+  }>>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -85,6 +93,14 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
   const handleSendMessage = async () => {
     if (!message.trim() || isLoading || isStreaming || !examData) return
 
+    // Add student message to conversation history
+    const studentMessage = {
+      type: 'student' as const,
+      content: message.trim(),
+      timestamp: new Date()
+    }
+    setConversationHistory(prev => [...prev, studentMessage])
+
     setMessage('')
     setIsLoading(true)
     setIsStreaming(true)
@@ -101,7 +117,11 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
           fileName: examData.fileName,
           studentResponse: message.trim(),
           currentQuestion: feedbackData.currentQuestion,
-          questionProgress: feedbackData.questionProgress
+          questionProgress: feedbackData.questionProgress,
+          currentRemediatingQuestion: feedbackData.currentRemediatingQuestion,
+          currentOriginalQuestion: feedbackData.currentOriginalQuestion,
+          currentStudentAnswer: feedbackData.currentStudentAnswer,
+          conversationHistory: conversationHistory
         }),
       })
 
@@ -128,10 +148,16 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
         setStreamedContent(accumulatedContent)
       }
 
+      // Add teacher response to conversation history
+      const teacherMessage = {
+        type: 'teacher' as const,
+        content: accumulatedContent,
+        timestamp: new Date()
+      }
+      setConversationHistory(prev => [...prev, teacherMessage])
+
       // Process the complete response to update feedback data
-      // For now, we'll simulate the response structure
-      // In a real implementation, you might want to parse specific markers in the stream
-      // to determine when the response is complete and extract metadata
+      const parsedResponse = parseFeedback(accumulatedContent)
       
       const isComplete = accumulatedContent.toLowerCase().includes('eindoverzicht') || 
                         accumulatedContent.toLowerCase().includes('alle vragen') ||
@@ -154,7 +180,10 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
         currentQuestion: nextQuestion,
         isComplete,
         finalGrade: isComplete ? Math.min(10, feedbackData.initialGrade + 1.5) : feedbackData.finalGrade,
-        questionProgress: updatedProgress
+        questionProgress: updatedProgress,
+        currentRemediatingQuestion: parsedResponse.remediatingQuestion,
+        currentOriginalQuestion: parsedResponse.question,
+        currentStudentAnswer: parsedResponse.studentAnswer
       }
       
       onUpdateFeedback(updatedFeedbackData)

@@ -57,7 +57,17 @@ export async function POST(request: NextRequest) {
 
     // Parse request data
     const body = await request.json()
-    const { examContent, fileName, studentResponse, currentQuestion, questionProgress } = body
+    const { 
+      examContent, 
+      fileName, 
+      studentResponse, 
+      currentQuestion, 
+      questionProgress,
+      currentRemediatingQuestion,
+      currentOriginalQuestion,
+      currentStudentAnswer,
+      conversationHistory
+    } = body
 
     if (!examContent) {
       return new Response('Toets inhoud is vereist', { status: 400 })
@@ -71,19 +81,30 @@ export async function POST(request: NextRequest) {
 
 CONTEXT:
 - Je bent bezig met vraag ${currentQuestion} van de toets
-- De leerling heeft geantwoord: "${studentResponse}"
+- BELANGRIJKE CONTEXT - Dit was je laatste remedierende vraag aan de leerling: "${currentRemediatingQuestion || 'Eerste interactie'}"
+- ORIGINELE VRAAG uit de toets: "${currentOriginalQuestion || 'Nog niet bepaald'}"
+- OORSPRONKELIJK ANTWOORD van leerling: "${currentStudentAnswer || 'Nog niet bepaald'}"
+- De leerling heeft NU geantwoord op jouw remedierende vraag: "${studentResponse}"
 - Voortgang vragen: ${JSON.stringify(questionProgress)}
+
+CONVERSATIE GESCHIEDENIS:
+${conversationHistory?.map((msg: any, i: number) => 
+  `${i + 1}. ${msg.type === 'student' ? 'LEERLING' : 'DOCENT'}: ${msg.content}`
+).join('\n') || 'Geen eerdere conversatie'}
 
 OORSPRONKELIJKE TOETS:
 ${examContent}
 
 TAAK: 
-1. Reageer op het antwoord van de leerling voor vraag ${currentQuestion}
-2. Als het antwoord goed/voldoende is, ga door naar de volgende vraag
-3. Als het antwoord nog niet goed is, geef hints en vraag door (geef NOOIT direct het antwoord)
-4. Als alle vragen zijn behandeld, geef een eindoverzicht
+1. Je WEET wat je remedierende vraag was: "${currentRemediatingQuestion}"
+2. Reageer specifiek op het antwoord "${studentResponse}" op DIE vraag
+3. Als het antwoord goed/voldoende is, ga door naar de volgende vraag uit de toets
+4. Als het antwoord nog niet goed is, geef hints en stel een nieuwe remedierende vraag
+5. Als alle vragen zijn behandeld, geef een eindoverzicht
+6. GEBRUIK DE CONTEXT - verwijs naar eerdere antwoorden als relevant
 
-Gebruik de gestructureerde format met ### koppen. Geef NOOIT direct het juiste antwoord.`
+Gebruik de gestructureerde format met ### koppen. Geef NOOIT direct het juiste antwoord.
+ONTHOUD: Je hebt de remedierende vraag "${currentRemediatingQuestion}" gesteld en reageert nu op het antwoord "${studentResponse}".`
 
     // Generate streaming content
     const result = await model.generateContentStream(prompt)

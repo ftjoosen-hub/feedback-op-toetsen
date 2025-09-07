@@ -125,9 +125,18 @@ Gebruik voor firstQuestionFeedback de exacte gestructureerde format met ### kopp
         
         const analysisData = JSON.parse(jsonMatch[0])
         
+        // Extract the remediating question from the first question feedback
+        const firstFeedback = analysisData.firstQuestionFeedback || ''
+        const remediatingMatch = firstFeedback.match(/### REMEDIERENDE VRAAG:\s*([\s\S]*?)$/i)
+        const questionMatch = firstFeedback.match(/### VRAAG:\s*([\s\S]*?)(?=### JOUW ANTWOORD:|$)/i)
+        const answerMatch = firstFeedback.match(/### JOUW ANTWOORD:\s*([\s\S]*?)(?=### FEEDBACK:|$)/i)
+        
         return NextResponse.json({
           success: true,
-          ...analysisData
+          ...analysisData,
+          currentRemediatingQuestion: remediatingMatch ? remediatingMatch[1].trim() : undefined,
+          currentOriginalQuestion: questionMatch ? questionMatch[1].trim() : undefined,
+          currentStudentAnswer: answerMatch ? answerMatch[1].trim() : undefined
         })
       } catch (parseError) {
         console.error('JSON parsing error:', parseError)

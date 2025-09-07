@@ -70,7 +70,10 @@ export default function ExamChecker() {
         totalQuestions: data.totalQuestions,
         feedback: data.firstQuestionFeedback,
         isComplete: false,
-        questionProgress: data.questionProgress || {}
+        questionProgress: data.questionProgress || {},
+        currentRemediatingQuestion: undefined,
+        currentOriginalQuestion: undefined,
+        currentStudentAnswer: undefined
       })
       
       setCurrentStep('feedback')
