@@ -54,7 +54,7 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
   // Auto-scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [feedbackData])
+  }, [feedbackData, streamedContent, isStreaming, isLoading])
 
   // Auto-resize textarea
   useEffect(() => {
@@ -248,7 +248,7 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
       {/* Header */}
       <div className="bg-blue-600 text-white p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-3 flex-1">
             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
               <span className="text-xl">👨‍🏫</span>
             </div>
@@ -259,6 +259,30 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
               </p>
             </div>
           </div>
+          
+          {/* Progress indicators */}
+          <div className="flex items-center space-x-2 mx-4">
+            {Array.from({ length: feedbackData.totalQuestions }, (_, i) => i + 1).map(questionNum => {
+              const status = feedbackData.questionProgress[questionNum] || 'pending'
+              const getProgressColor = (status: string) => {
+                switch (status) {
+                  case 'completed': return 'bg-green-400'
+                  case 'reviewing': return 'bg-yellow-400'
+                  default: return 'bg-blue-300'
+                }
+              }
+              return (
+                <div
+                  key={questionNum}
+                  className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium ${getProgressColor(status)}`}
+                  title={`Vraag ${questionNum}: ${status === 'completed' ? 'Afgerond' : status === 'reviewing' ? 'Bezig' : 'Wachtend'}`}
+                >
+                  {questionNum}
+                </div>
+              )
+            })}
+          </div>
+          
           <button
             onClick={onBackToFeedback}
             className="text-blue-100 hover:text-white text-sm underline"
@@ -269,20 +293,7 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
       </div>
 
       {/* Structured feedback content */}
-      <div className="max-h-96 overflow-y-auto p-4 space-y-4">
-        {/* Show streaming indicator */}
-        {isStreaming && (
-          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
-            <div className="flex items-center space-x-3">
-              <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-              </div>
-              <span className="text-blue-800 font-medium">Docent denkt na en schrijft feedback...</span>
-            </div>
-          </div>
-        )}
+      <div className="max-h-[calc(100vh-300px)] min-h-[500px] overflow-y-auto p-4 space-y-4">
 
         {parsedFeedback.isStructured ? (
           <>
@@ -339,6 +350,20 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
             </h4>
             <div className="text-gray-800">
               {formatContent(contentToDisplay)}
+            </div>
+          </div>
+        )}
+
+        {/* Show streaming indicator at the bottom */}
+        {isStreaming && (
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <div className="flex items-center space-x-3">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              </div>
+              <span className="text-blue-800 font-medium">Docent denkt na en schrijft feedback...</span>
             </div>
           </div>
         )}
