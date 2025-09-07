@@ -184,50 +184,51 @@ export default function FeedbackDisplay({ feedbackData, onStartChat, onReset }: 
       </div>
 
       {/* Current feedback */}
-      <div className="bg-white rounded-xl shadow-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            {feedbackData.isComplete ? 'Eindoverzicht' : `Vraag ${feedbackData.currentQuestion} van ${feedbackData.totalQuestions}`}
-          </h3>
-          {!feedbackData.isComplete && (
-            <span className="text-sm text-gray-500">
-              Nog {feedbackData.totalQuestions - feedbackData.currentQuestion + 1} vragen te gaan
-            </span>
-          )}
-        </div>
-        
-        <div className="feedback-section p-4 rounded-lg">
-          <div className="prose prose-sm max-w-none">
-            {formatFeedback(feedbackData.feedback)}
-          </div>
-        </div>
-
-        {!feedbackData.isComplete && (
-          <div className="mt-6 flex justify-center">
+      {!feedbackData.isComplete && (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="text-center">
+            <h3 className="text-xl font-semibold text-gray-900 mb-4">
+              Klaar om te beginnen?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              We gaan nu vraag voor vraag door je toets heen. Je krijgt feedback en kunt je antwoorden verbeteren.
+            </p>
             <button
               onClick={onStartChat}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-2"
+              className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center space-x-3 mx-auto"
             >
-              <span>💬</span>
-              <span>Antwoord geven</span>
+              <span className="text-xl">🚀</span>
+              <span>Start met Vraag {feedbackData.currentQuestion}</span>
             </button>
           </div>
-        )}
+        </div>
+      )}
 
-        {feedbackData.isComplete && (
-          <div className="mt-6 text-center">
-            <div className="success-animation inline-block">
-              <span className="text-4xl">🎉</span>
+      {feedbackData.isComplete && (
+        <div className="bg-white rounded-xl shadow-lg p-6">
+          <div className="text-center">
+            <div className="success-animation inline-block mb-4">
+              <span className="text-6xl">🎉</span>
             </div>
-            <p className="text-lg font-medium text-green-700 mt-2">
-              Gefeliciteerd! Je hebt alle vragen doorgenomen.
+            <h3 className="text-2xl font-bold text-green-700 mb-2">
+              Gefeliciteerd!
+            </h3>
+            <p className="text-lg text-gray-700 mb-2">
+              Je hebt alle vragen doorgenomen en veel geleerd!
             </p>
-            <p className="text-gray-600 mt-1">
-              Je hebt veel geleerd en je cijfer is verbeterd!
+            <p className="text-gray-600">
+              Je cijfer is verbeterd van {feedbackData.initialGrade.toFixed(1)} naar {feedbackData.finalGrade?.toFixed(1)}
             </p>
+            
+            {/* Final feedback */}
+            <div className="mt-6 bg-green-50 p-4 rounded-lg border border-green-200">
+              <div className="prose prose-sm max-w-none text-left">
+                {formatFeedback(feedbackData.feedback)}
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

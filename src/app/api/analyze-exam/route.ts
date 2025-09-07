@@ -19,22 +19,36 @@ WERKWIJZE:
 - Dit cijfer is niet definitief, maar laat zien hoe de leerling zou scoren zonder remediëring
 
 3. KORTE SAMENVATTING
-- Benoem kort wat goed ging en waar extra aandacht nodig is
+- Benoem KORT wat goed ging en waar extra aandacht nodig is (max 3-4 zinnen)
 - Gebruik een overzicht met symbolen: ✅ = goed, ⚠️ = verbetering nodig
 
-4. DIRECTE START MET INTERACTIE (vraag-voor-vraag)
-- Voor elke vraag geldt:
-  * Goed antwoord → geef een compliment + reden waarom het goed is
-  * Onjuist/onvolledig antwoord → Laat het antwoord zien, benoem kort wat er misgaat, geef NOOIT meteen het juiste antwoord, formuleer feedback als hint of doorvraagvraag
+4. GESTRUCTUREERDE FEEDBACK PER VRAAG
+- Gebruik ALTIJD deze exacte structuur voor elke vraag:
+
+### VRAAG:
+[Citeer hier de originele vraag uit de toets]
+
+### JOUW ANTWOORD:
+[Toon hier het antwoord van de leerling]
+
+### FEEDBACK:
+[Beknopte feedback - max 2-3 korte zinnen of opsomming]
+- Goed antwoord → compliment + waarom goed
+- Onjuist antwoord → wat ging mis + hint
+- Gebruik ✅ ⚠️ 💡 symbolen
+
+### REMEDIERENDE VRAAG:
+[Stel hier een duidelijke, specifieke vraag die de leerling helpt het juiste inzicht te krijgen]
 
 5. BEPERKINGEN EN NIVEAU
 - Gebruik alleen kennis die hoort bij havo 4–5 scheikunde
-- Taalgebruik: eenvoudig, helder, passend bij havo-leerlingen
+- Taalgebruik: KORT, eenvoudig, helder, passend bij havo-leerlingen
 - Geen termen buiten de syllabus
 - Normale tekst, geen LaTeX
 - Wetenschappelijke notatie zoals leerlingen het leren (6,02 × 10²³)
 - Reactievergelijkingen correct noteren (H₂O, CO₂)
 - Gebruik → bij aflopende reacties en ⇌ bij evenwichtsreacties
+- Als er tabellen in de toets staan: BESCHRIJF de inhoud, probeer NIET de tabel na te maken
 
 6. AFSLUITING NA ALLE VRAGEN
 - Indicatiecijfer na remediëring
@@ -86,17 +100,17 @@ ${examContent}
 
 BESTANDSNAAM: ${fileName}
 
-Geef je antwoord in het volgende JSON formaat:
+Geef je antwoord in het volgende JSON formaat (gebruik de gestructureerde feedback format voor firstQuestionFeedback):
 {
-  "summary": "Korte samenvatting met ✅ en ⚠️ symbolen",
+  "summary": "KORTE samenvatting met ✅ en ⚠️ symbolen (max 3-4 zinnen)",
   "initialGrade": 7.2,
   "learningObjectives": ["Ik kan...", "Ik begrijp...", "Ik kan toepassen..."],
   "totalQuestions": 5,
-  "firstQuestionFeedback": "Feedback op de eerste vraag volgens de werkwijze",
+  "firstQuestionFeedback": "Gebruik de gestructureerde format: ### VRAAG: ... ### JOUW ANTWOORD: ... ### FEEDBACK: ... ### REMEDIERENDE VRAAG: ...",
   "questionProgress": {"1": "reviewing", "2": "pending", "3": "pending", "4": "pending", "5": "pending"}
 }
 
-Start direct met de eerste vraag na je samenvatting. Geef NOOIT direct het juiste antwoord, maar begeleid met hints en doorvragen.`
+Gebruik voor firstQuestionFeedback de exacte gestructureerde format met ### koppen. Geef NOOIT direct het juiste antwoord.`
 
       result = await model.generateContent(prompt)
       const response = await result.response
@@ -141,16 +155,16 @@ TAAK:
 3. Als het antwoord nog niet goed is, geef hints en vraag door (geef NOOIT direct het antwoord)
 4. Als alle vragen zijn behandeld, geef een eindoverzicht
 
-Geef je antwoord in het volgende JSON formaat:
+Geef je antwoord in het volgende JSON formaat (gebruik gestructureerde format voor feedback):
 {
-  "feedback": "Je reactie op het antwoord van de leerling",
+  "feedback": "Gebruik de gestructureerde format: ### VRAAG: ... ### JOUW ANTWOORD: ... ### FEEDBACK: ... ### REMEDIERENDE VRAAG: ... (of eindoverzicht als complete)",
   "currentQuestion": 2,
   "isComplete": false,
   "finalGrade": 8.1,
   "questionProgress": {"1": "completed", "2": "reviewing", "3": "pending", "4": "pending", "5": "pending"}
 }
 
-Als alle vragen zijn afgerond, zet "isComplete": true en geef een eindoverzicht met het definitieve cijfer.`
+Als alle vragen zijn afgerond, zet "isComplete": true en geef een eindoverzicht met het definitieve cijfer (geen gestructureerde format voor eindoverzicht).`
 
       result = await model.generateContent(prompt)
       const response = await result.response
