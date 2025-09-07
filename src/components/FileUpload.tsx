@@ -188,13 +188,16 @@ export default function FileUpload({ onFileUpload, isAnalyzing }: FileUploadProp
               Ondersteunde formaten:
             </p>
             <div className="flex flex-wrap justify-center gap-2 text-xs text-gray-400">
-              <span className="bg-gray-100 px-2 py-1 rounded">📄 PDF</span>
+              <span className="bg-gray-100 px-2 py-1 rounded">📄 PDF (beperkt)</span>
               <span className="bg-gray-100 px-2 py-1 rounded">📝 Word (.docx)</span>
               <span className="bg-gray-100 px-2 py-1 rounded">📸 Afbeeldingen</span>
               <span className="bg-gray-100 px-2 py-1 rounded">📋 Tekst (.txt)</span>
             </div>
             <p className="text-xs text-gray-400 mt-2">
               Maximum bestandsgrootte: 10MB
+            </p>
+            <p className="text-xs text-orange-500 mt-1">
+              💡 Voor beste resultaten: gebruik Word (.docx) of maak foto's van je toets
             </p>
           </div>
         </div>

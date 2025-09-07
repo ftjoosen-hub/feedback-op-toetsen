@@ -39,13 +39,22 @@ export async function POST(request: NextRequest) {
     } else if (isPdf) {
       // Extract text from .pdf using pdf-parse with dynamic import
       try {
-        const pdfParse = (await import('pdf-parse')).default
-        const pdfData = await pdfParse(buffer)
-        textContent = pdfData.text
+        // Try to import pdf-parse, fallback if not available
+        try {
+          const pdfParse = (await import('pdf-parse')).default
+          const pdfData = await pdfParse(buffer)
+          textContent = pdfData.text
+        } catch (importError) {
+          // Fallback: basic text extraction attempt
+          textContent = buffer.toString('utf8').replace(/[^\x20-\x7E\n\r\t]/g, ' ')
+          console.warn('PDF parsing library not available, using basic text extraction')
+        }
         fileType = 'PDF Document (.pdf)'
       } catch (pdfError) {
         console.error('PDF parsing error:', pdfError)
-        return NextResponse.json({ error: 'Fout bij het lezen van het PDF bestand' }, { status: 400 })
+        return NextResponse.json({ 
+          error: 'PDF verwerking niet beschikbaar. Probeer het bestand als .docx of .txt op te slaan en opnieuw te uploaden.' 
+        }, { status: 400 })
       }
     }
 

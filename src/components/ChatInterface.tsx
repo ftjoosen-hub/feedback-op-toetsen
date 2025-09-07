@@ -208,6 +208,32 @@ export default function ChatInterface({ feedbackData, examData, onUpdateFeedback
     return content
       .split('\n')
       .map((line, index) => {
+        // Handle structured feedback sections
+        if (line.trim().startsWith('### VRAAG:')) {
+          return <h4 key={index} className="font-semibold text-blue-900 mt-4 mb-2 flex items-center">
+            <span className="text-lg mr-2">📝</span>
+            {line.replace('### VRAAG:', '').trim()}
+          </h4>
+        }
+        if (line.trim().startsWith('### JOUW ANTWOORD:')) {
+          return <h4 key={index} className="font-semibold text-gray-900 mt-4 mb-2 flex items-center">
+            <span className="text-lg mr-2">✏️</span>
+            Jouw Antwoord
+          </h4>
+        }
+        if (line.trim().startsWith('### FEEDBACK:')) {
+          return <h4 key={index} className="font-semibold text-green-900 mt-4 mb-2 flex items-center">
+            <span className="text-lg mr-2">💬</span>
+            Feedback
+          </h4>
+        }
+        if (line.trim().startsWith('### REMEDIERENDE VRAAG:')) {
+          return <h4 key={index} className="font-semibold text-yellow-900 mt-4 mb-2 flex items-center">
+            <span className="text-lg mr-2">❓</span>
+            Vraag voor Jou
+          </h4>
+        }
+        
         if (line.trim().startsWith('✅')) {
           return <div key={index} className="flex items-start space-x-2 text-green-700 bg-green-50 p-2 rounded mb-2">
             <span>✅</span>

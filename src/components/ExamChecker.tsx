@@ -21,6 +21,9 @@ interface FeedbackData {
   isComplete: boolean
   finalGrade?: number
   questionProgress: { [key: number]: 'pending' | 'reviewing' | 'completed' }
+  currentRemediatingQuestion?: string
+  currentOriginalQuestion?: string
+  currentStudentAnswer?: string
 }
 
 export default function ExamChecker() {
@@ -71,9 +74,9 @@ export default function ExamChecker() {
         feedback: data.firstQuestionFeedback,
         isComplete: false,
         questionProgress: data.questionProgress || {},
-        currentRemediatingQuestion: undefined,
-        currentOriginalQuestion: undefined,
-        currentStudentAnswer: undefined
+        currentRemediatingQuestion: data.currentRemediatingQuestion,
+        currentOriginalQuestion: data.currentOriginalQuestion,
+        currentStudentAnswer: data.currentStudentAnswer
       })
       
       setCurrentStep('feedback')
