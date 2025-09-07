@@ -136,6 +136,7 @@ Gebruik voor firstQuestionFeedback de exacte gestructureerde format met ### kopp
           { status: 500 }
         )
       }
+    }
 
     return NextResponse.json(
       { error: 'Onbekende actie' },

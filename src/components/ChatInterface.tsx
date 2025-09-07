@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 
 interface FeedbackData {
   summary: string
@@ -14,9 +14,16 @@ interface FeedbackData {
   questionProgress: { [key: number]: 'pending' | 'reviewing' | 'completed' }
 }
 
+interface ExamData {
+  content: string
+  fileName: string
+  fileType: string
+}
+
 interface ChatInterfaceProps {
   feedbackData: FeedbackData
-  onSendMessage: (message: string) => void
+  examData: ExamData | null
+  onUpdateFeedback: (feedbackData: FeedbackData) => void
   onBackToFeedback: () => void
 }
 
@@ -28,9 +35,11 @@ interface ParsedFeedback {
   isStructured: boolean
 }
 
-export default function ChatInterface({ feedbackData, onSendMessage, onBackToFeedback }: ChatInterfaceProps) {
+export default function ChatInterface({ feedbackData, examData, onUpdateFeedback, onBackToFeedback }: ChatInterfaceProps) {
   const [message, setMessage] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [streamedContent, setStreamedContent] = useState('')
+  const [isStreaming, setIsStreaming] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -48,7 +57,7 @@ export default function ChatInterface({ feedbackData, onSendMessage, onBackToFee
   }, [message])
 
   // Parse structured feedback
-  const parseFeedback = (feedbackText: string): ParsedFeedback => {
+  const parseFeedback = useCallback((feedbackText: string): ParsedFeedback => {
     const questionMatch = feedbackText.match(/### VRAAG:\s*([\s\S]*?)(?=### JOUW ANTWOORD:|$)/i)
     const answerMatch = feedbackText.match(/### JOUW ANTWOORD:\s*([\s\S]*?)(?=### FEEDBACK:|$)/i)
     const feedbackMatch = feedbackText.match(/### FEEDBACK:\s*([\s\S]*?)(?=### REMEDIERENDE VRAAG:|$)/i)
@@ -71,20 +80,91 @@ export default function ChatInterface({ feedbackData, onSendMessage, onBackToFee
       remediatingQuestion: '',
       isStructured: false
     }
-  }
+  }, [])
 
   const handleSendMessage = async () => {
-    if (!message.trim() || isLoading) return
+    if (!message.trim() || isLoading || isStreaming || !examData) return
 
     setMessage('')
     setIsLoading(true)
+    setIsStreaming(true)
+    setStreamedContent('')
 
     try {
-      await onSendMessage(message.trim())
+      const response = await fetch('/api/stream-feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          examContent: examData.content,
+          fileName: examData.fileName,
+          studentResponse: message.trim(),
+          currentQuestion: feedbackData.currentQuestion,
+          questionProgress: feedbackData.questionProgress
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Fout bij het verwerken van je antwoord')
+      }
+
+      const reader = response.body?.getReader()
+      if (!reader) {
+        throw new Error('Geen response stream beschikbaar')
+      }
+
+      let accumulatedContent = ''
+      
+      while (true) {
+        const { done, value } = await reader.read()
+        
+        if (done) {
+          break
+        }
+        
+        const chunk = new TextDecoder().decode(value)
+        accumulatedContent += chunk
+        setStreamedContent(accumulatedContent)
+      }
+
+      // Process the complete response to update feedback data
+      // For now, we'll simulate the response structure
+      // In a real implementation, you might want to parse specific markers in the stream
+      // to determine when the response is complete and extract metadata
+      
+      const isComplete = accumulatedContent.toLowerCase().includes('eindoverzicht') || 
+                        accumulatedContent.toLowerCase().includes('alle vragen') ||
+                        accumulatedContent.toLowerCase().includes('gefeliciteerd')
+      
+      const nextQuestion = isComplete ? feedbackData.currentQuestion : feedbackData.currentQuestion + 1
+      
+      // Update question progress
+      const updatedProgress = { ...feedbackData.questionProgress }
+      if (!isComplete) {
+        updatedProgress[feedbackData.currentQuestion] = 'completed'
+        if (nextQuestion <= feedbackData.totalQuestions) {
+          updatedProgress[nextQuestion] = 'reviewing'
+        }
+      }
+      
+      const updatedFeedbackData: FeedbackData = {
+        ...feedbackData,
+        feedback: accumulatedContent,
+        currentQuestion: nextQuestion,
+        isComplete,
+        finalGrade: isComplete ? Math.min(10, feedbackData.initialGrade + 1.5) : feedbackData.finalGrade,
+        questionProgress: updatedProgress
+      }
+      
+      onUpdateFeedback(updatedFeedbackData)
+      
     } catch (error) {
       console.error('Error sending message:', error)
+      setStreamedContent('Er is een fout opgetreden bij het verwerken van je antwoord. Probeer het opnieuw.')
     } finally {
       setIsLoading(false)
+      setIsStreaming(false)
     }
   }
 
@@ -130,7 +210,10 @@ export default function ChatInterface({ feedbackData, onSendMessage, onBackToFee
       })
   }
 
-  const parsedFeedback = parseFeedback(feedbackData.feedback)
+  // Use streamed content if available, otherwise use feedback data
+  const contentToDisplay = isStreaming && streamedContent ? streamedContent : feedbackData.feedback
+  const parsedFeedback = parseFeedback(contentToDisplay)
+  
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
       {/* Header */}
@@ -158,6 +241,20 @@ export default function ChatInterface({ feedbackData, onSendMessage, onBackToFee
 
       {/* Structured feedback content */}
       <div className="max-h-96 overflow-y-auto p-4 space-y-4">
+        {/* Show streaming indicator */}
+        {isStreaming && (
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 mb-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              </div>
+              <span className="text-blue-800 font-medium">Docent denkt na en schrijft feedback...</span>
+            </div>
+          </div>
+        )}
+
         {parsedFeedback.isStructured ? (
           <>
             {/* Original Question */}
@@ -205,19 +302,19 @@ export default function ChatInterface({ feedbackData, onSendMessage, onBackToFee
             </div>
           </>
         ) : (
-          // Fallback for unstructured feedback
+          // Fallback for unstructured feedback or streaming content
           <div className="bg-white p-4 rounded-lg shadow-md border border-gray-200">
             <h4 className="font-semibold text-gray-900 mb-2 flex items-center">
               <span className="text-lg mr-2">💬</span>
-              Feedback van je Docent
+              {isStreaming ? 'Docent schrijft feedback...' : 'Feedback van je Docent'}
             </h4>
             <div className="text-gray-800">
-              {formatContent(feedbackData.feedback)}
+              {formatContent(contentToDisplay)}
             </div>
           </div>
         )}
 
-        {isLoading && (
+        {isLoading && !isStreaming && (
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
             <div className="flex items-center space-x-3">
               <div className="flex space-x-1">
@@ -250,12 +347,12 @@ export default function ChatInterface({ feedbackData, onSendMessage, onBackToFee
               placeholder="Denk na over de vraag hierboven en typ je antwoord hier... (Enter om te versturen)"
               className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               rows={1}
-              disabled={isLoading}
+              disabled={isLoading || isStreaming}
             />
           </div>
           <button
             onClick={handleSendMessage}
-            disabled={!message.trim() || isLoading}
+            disabled={!message.trim() || isLoading || isStreaming}
             className="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
