@@ -82,49 +82,6 @@ export default function ExamChecker() {
     }
   }
 
-  const handleChatMessage = async (message: string) => {
-    if (!examData || !feedbackData) return
-
-    try {
-      const response = await fetch('/api/analyze-exam', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          examContent: examData.content,
-          fileName: examData.fileName,
-          action: 'continue_feedback',
-          studentResponse: message,
-          currentQuestion: feedbackData.currentQuestion,
-          questionProgress: feedbackData.questionProgress
-        }),
-      })
-
-      if (!response.ok) {
-        throw new Error('Fout bij het verwerken van je antwoord')
-      }
-
-      const data = await response.json()
-      
-      setFeedbackData(prev => prev ? {
-        ...prev,
-        currentQuestion: data.currentQuestion,
-        feedback: data.feedback,
-        isComplete: data.isComplete,
-        finalGrade: data.finalGrade,
-        questionProgress: data.questionProgress || prev.questionProgress
-      } : null)
-
-      if (data.isComplete) {
-        setCurrentStep('feedback')
-      }
-    } catch (error) {
-      console.error('Chat error:', error)
-      setError('Er is een fout opgetreden bij het verwerken van je antwoord.')
-    }
-  }
-
   const resetExam = () => {
     setExamData(null)
     setFeedbackData(null)
@@ -166,7 +123,13 @@ export default function ExamChecker() {
       {currentStep === 'chat' && feedbackData && !feedbackData.isComplete && (
         <ChatInterface 
           feedbackData={feedbackData}
-          onSendMessage={handleChatMessage}
+          examData={examData}
+          onUpdateFeedback={(updatedFeedback) => {
+            setFeedbackData(updatedFeedback)
+            if (updatedFeedback.isComplete) {
+              setCurrentStep('feedback')
+            }
+          }}
           onBackToFeedback={() => setCurrentStep('feedback')}
         />
       )}

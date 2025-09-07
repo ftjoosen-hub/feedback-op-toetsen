@@ -137,61 +137,6 @@ Gebruik voor firstQuestionFeedback de exacte gestructureerde format met ### kopp
         )
       }
 
-    } else if (action === 'continue_feedback') {
-      // Continue the feedback conversation
-      prompt = `${CHEMISTRY_TEACHER_PROMPT}
-
-CONTEXT:
-- Je bent bezig met vraag ${currentQuestion} van de toets
-- De leerling heeft geantwoord: "${studentResponse}"
-- Voortgang vragen: ${JSON.stringify(questionProgress)}
-
-OORSPRONKELIJKE TOETS:
-${examContent}
-
-TAAK: 
-1. Reageer op het antwoord van de leerling voor vraag ${currentQuestion}
-2. Als het antwoord goed/voldoende is, ga door naar de volgende vraag
-3. Als het antwoord nog niet goed is, geef hints en vraag door (geef NOOIT direct het antwoord)
-4. Als alle vragen zijn behandeld, geef een eindoverzicht
-
-Geef je antwoord in het volgende JSON formaat (gebruik gestructureerde format voor feedback):
-{
-  "feedback": "Gebruik de gestructureerde format: ### VRAAG: ... ### JOUW ANTWOORD: ... ### FEEDBACK: ... ### REMEDIERENDE VRAAG: ... (of eindoverzicht als complete)",
-  "currentQuestion": 2,
-  "isComplete": false,
-  "finalGrade": 8.1,
-  "questionProgress": {"1": "completed", "2": "reviewing", "3": "pending", "4": "pending", "5": "pending"}
-}
-
-Als alle vragen zijn afgerond, zet "isComplete": true en geef een eindoverzicht met het definitieve cijfer (geen gestructureerde format voor eindoverzicht).`
-
-      result = await model.generateContent(prompt)
-      const response = await result.response
-      const text = response.text()
-
-      try {
-        // Extract JSON from response
-        const jsonMatch = text.match(/\{[\s\S]*\}/)
-        if (!jsonMatch) {
-          throw new Error('No JSON found in response')
-        }
-        
-        const feedbackData = JSON.parse(jsonMatch[0])
-        
-        return NextResponse.json({
-          success: true,
-          ...feedbackData
-        })
-      } catch (parseError) {
-        console.error('JSON parsing error:', parseError)
-        return NextResponse.json(
-          { error: 'Fout bij het verwerken van de feedback' },
-          { status: 500 }
-        )
-      }
-    }
-
     return NextResponse.json(
       { error: 'Onbekende actie' },
       { status: 400 }
