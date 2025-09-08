@@ -1,39 +1,54 @@
-# ⚗️ Scheikunde Toets Checker - HAVO/VWO
+# 🚀 Ultimate AI Education Template - Next.js
 
-> **Een intelligente scheikundetoets checker die persoonlijke feedback geeft op HAVO/VWO niveau**
+> **Een complete, professionele AI template met Gemini API, camera, multi-file upload, audio transcriptie, advanced TTS en meer!**
 >
 > **Gemaakt door Tom Naberink voor de onderwijssector**
 
-Een geavanceerde Next.js applicatie die scheikundetoetsen analyseert en stap-voor-stap feedback geeft. Perfect voor HAVO/VWO leerlingen die hun scheikundekennis willen verbeteren.
+Een geavanceerde Next.js template die **alles** biedt wat je nodig hebt voor innovatieve AI-projecten in het onderwijs. Van simpele chatbots tot complexe multi-modal AI applicaties - dit is je startpunt!
 
-## ✨ Hoofdfuncties
+## ✨ Complete Feature Set
 
-### 🎯 **Toets Analyse**
-- 📄 **Multi-format Upload**: PDF, Word (.docx), afbeeldingen, tekstbestanden
-- 🧠 **AI Analyse**: Gemini 2.5 Flash voor intelligente feedback
-- 📊 **Automatische Beoordeling**: Indicatiecijfer en leerdoelen
-- 💬 **Gestructureerde Feedback**: Per vraag uitgebreide uitleg
-- ⚡ **Real-time Streaming**: Live feedback tijdens het typen
+### 🎯 **Core AI Functionaliteiten**
+- 🧠 **Multi-Model AI**: Gemini 2.5 Pro, 2.5 Flash, en 2.0 Flash met internet toegang
+- 🌐 **Real-time Internet Access**: Gemini 2.0 Flash met Google Search integration
+- 🎵 **Audio Transcriptie**: Gemini 2.5 Flash voor speech-to-text
+- 📸 **Multi-Image Analysis**: Meerdere afbeeldingen tegelijk analyseren
+- 💬 **Markdown Rendering**: Perfecte opmaak van AI responses
+- 🗣️ **Spraakherkenning**: Browser native voice input
+- ⚡ **Streaming Responses**: Real-time AI response weergave
 
-### 👨‍🏫 **Interactieve Begeleiding**
-- 🗣️ **Socratische Methode**: Vragen stellen in plaats van antwoorden geven
-- 📈 **Stap-voor-stap**: Geleidelijke verbetering per vraag
-- 🎯 **Remediërende Vragen**: Gerichte vragen om begrip te verdiepen
-- 📊 **Voortgangsoverzicht**: Visuele progress tracking
-- 🏆 **Cijferverbetering**: Van startcijfer naar eindcijfer
+### 🔊 **Advanced Text-to-Speech (TTS)**
+- 🎙️ **Dual TTS Engines**: Microsoft TTS (standaard) + Gemini AI TTS
+- 🎭 **30 Gemini Voices**: Van Zephyr tot Sulafat met unieke karakteristieken
+- 😊 **7 Emotion Styles**: Neutraal, Gelukkig, Enthousiast, Kalm, Professioneel, Vriendelijk, Informatief
+- ⚡ **Speed Control**: 4 snelheden voor Microsoft TTS (0.75x tot 2.0x)
+- ⚙️ **Unified Settings**: Één settings dropdown voor alle TTS opties
+- 📱 **Responsive Interface**: Geoptimaliseerd voor alle schermformaten
 
-### 📱 **User Experience**
-- 💙 **Modern Design**: Strakke blauwe interface geoptimaliseerd voor onderwijs
+### 📁 **Geavanceerd File Management**
+- 🖼️ **Afbeeldingen**: JPG, PNG, GIF, WebP, BMP - met preview en multi-select
+- 📄 **Documenten**: PDF, DOCX, TXT, MD - automatische tekst extractie
+- 📊 **Data**: CSV, JSON - gestructureerde data analyse
+- 🎵 **Audio**: MP3, WAV, OGG, M4A, AAC, FLAC, MP4, WebM - auto-transcriptie
+- 📱 **Camera Capture**: Direct foto's maken vanuit de browser
+- 🎯 **Drag & Drop**: Bestanden slepen en neerzetten
+- 📋 **Copy/Paste**: Afbeeldingen, URLs en tekst plakken
+- ✅ **Batch Processing**: Meerdere bestanden tegelijk selecteren en verwerken
+
+### 🎨 **User Experience**
+- 💜 **Modern Design**: Strakke paarse interface met Tailwind CSS
 - 📱 **Mobile First**: Perfect responsive op alle apparaten
-- ⚡ **Real-time Feedback**: Loading states en progress indicators
-- 🎮 **Keyboard Shortcuts**: Enter om te versturen
+- ⚡ **Real-time Feedback**: Loading states, progress indicators
+- 🎮 **Keyboard Shortcuts**: Enter om te verzenden, Ctrl+V om te plakken
 - 🔒 **Secure**: Alle API keys blijven server-side
+- 📄 **Word Export**: AI responses exporteren naar Word documenten
+- 📋 **One-Click Copy**: Responses kopiëren naar klembord
 
-### 🚀 **Technische Specificaties**
+### 🚀 **Deployment & Performance**
 - 🌐 **Netlify Optimized**: Perfect voor Bolt.new deployment
 - ⚡ **Next.js 15**: Nieuwste versie met optimale performance
 - 🔧 **TypeScript**: Volledig type-safe development
-- 📦 **Educatie Focus**: Gespecialiseerd voor scheikundeonderwijs
+- 📦 **Lean Dependencies**: Alleen wat nodig is, geen bloat
 
 ## 🚀 Quick Start: Van 0 naar AI in 5 Minuten!
 
